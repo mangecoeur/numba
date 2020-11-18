@@ -880,6 +880,79 @@ complex_nanmax = register_jitable(
 )
 
 
+
+
+@overload(np.nanargmin)
+def np_nanargmin(a):
+    dt = determine_dtype(a)
+    if np.issubdtype(dt, np.complexfloating):
+        return complex_nanargmin
+    else:
+        return real_nanargmin
+
+
+@overload(np.nanargmax)
+def np_nanargmax(a):
+    dt = determine_dtype(a)
+    if np.issubdtype(dt, np.complexfloating):
+        return complex_nanargmax
+    else:
+        return real_nanargmax
+
+
+def nan_arg_min_max_factory(comparison_op, is_complex_dtype):
+    if is_complex_dtype:
+        def impl(a):
+            arr = np.asarray(a)
+            check_array(arr)
+            it = np.nditer(arr)
+            val = next(it).take(0)
+            return_idx = 0
+            for i, view in enumerate(it):
+                v = view.item()
+                if np.isnan(val.real) and not np.isnan(v.real):
+                    val = v
+                    return_idx = i + 1
+                else:
+                    if comparison_op(v.real, val.real):
+                        val = v
+                        return_idx = i + 1
+                    elif v.real == val.real:
+                        if comparison_op(v.imag, val.imag):
+                            val = v
+                            return_idx = i +1
+            return return_idx
+    else:
+        def impl(a):
+            arr = np.asarray(a)
+            check_array(arr)
+            it = np.nditer(arr)
+            val = next(it).take(0)
+            return_idx = 0
+            for i, view in enumerate(it):
+                v = view.item()
+                if not np.isnan(v):
+                    if not comparison_op(val, v):
+                        val = v
+                        return_idx = i + 1
+            return return_idx
+
+    return impl
+
+real_nanargmin = register_jitable(
+    nan_arg_min_max_factory(less_than, is_complex_dtype=False)
+)
+real_nanargmax = register_jitable(
+    nan_arg_min_max_factory(greater_than, is_complex_dtype=False)
+)
+complex_nanargmin = register_jitable(
+    nan_arg_min_max_factory(less_than, is_complex_dtype=True)
+)
+complex_nanargmax = register_jitable(
+    nan_arg_min_max_factory(greater_than, is_complex_dtype=True)
+)
+
+
 @overload(np.nanmin)
 def np_nanmin(a):
     dt = determine_dtype(a)
