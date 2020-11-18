@@ -86,11 +86,17 @@ def array_argmin(arr):
 def array_argmin_global(arr):
     return np.argmin(arr)
 
+def array_nanargmin_global(arr):
+    return np.nanargmin(arr)
+
 def array_argmax(arr):
     return arr.argmax()
 
 def array_argmax_global(arr):
     return np.argmax(arr)
+
+def array_nanargmax_global(arr):
+    return np.nanargmax(arr)
 
 def array_median_global(arr):
     return np.median(arr)
@@ -273,6 +279,12 @@ class TestArrayReductions(MemoryLeakMixin, TestCase):
 
     def test_argmax_basic(self):
         self.check_reduction_basic(array_argmax)
+
+    def test_nanargmin_basic(self):
+        self.check_reduction_basic(array_nanargmin_global)
+
+    def test_nanargmax_basic(self):
+        self.check_reduction_basic(array_nanargmax_global)
 
     def test_nanmin_basic(self):
         self.check_reduction_basic(array_nanmin)
